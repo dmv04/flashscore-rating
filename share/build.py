@@ -18,13 +18,14 @@ LAST_N = ["", "5", "8", "10"]
 
 
 def snapshot() -> dict:
-    data = {"/api/meta": service.meta()}
+    data = {}
     for n in LAST_N:
         last_n = int(n) if n else None
         suffix = f"&last_n={n}" if n else ""
         for scope in ["world"] + [t.id for t in LEAGUES]:
             data[f"/api/rating?scope={scope}{suffix}"] = service.rating_table(scope, last_n)
         data[f"/api/predictions?{suffix[1:]}"] = service.predictions(last_n)
+    data["/api/meta"] = service.meta()  # после расчётов: на пустой базе они скачивают данные
     return data
 
 
