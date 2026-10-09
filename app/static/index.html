@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Рейтинг команд</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1b1f24; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #2563eb; --pos: #16a34a; --neg: #dc2626; --bar: #dbe6fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1115; --card: #171a21; --text: #e6e8eb; --muted: #9aa3ae; --line: #2a2f3a;
+            --accent: #60a5fa; --pos: #4ade80; --neg: #f87171; --bar: #1e2a44; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; }
+  label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 12px; }
+  select, input, button { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+  input[type=range] { padding: 0; width: 180px; }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tabs { display: flex; gap: 6px; }
+  .tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; cursor: pointer; user-select: none; }
+  th:nth-child(2), td:nth-child(2) { text-align: left; }
+  td.rt { position: relative; font-weight: 600; min-width: 150px; }
+  td.rt .bar { position: absolute; left: 8px; top: 6px; bottom: 6px; background: var(--bar); border-radius: 3px; z-index: 0; }
+  td.rt span { position: relative; z-index: 1; }
+  .pos { color: var(--pos); } .neg { color: var(--neg); }
+  .predict { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  .result { font-size: 18px; font-weight: 600; margin-top: 12px; }
+  .err { color: var(--neg); }
+  details summary { cursor: pointer; color: var(--muted); }
+  code { font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Рейтинг команд по балансу голов</h1>
+  <div class="sub">Данные: flashscore.com · расчёт: система линейных уравнений, средний рейтинг турнира 2200</div>
+
+  <div class="card">
+    <div class="controls">
+      <div class="tabs" id="tabs"></div>
+      <label>Сезон <select id="season"></select></label>
+      <label>Матчей команды
+        <select id="lastN">
+          <option value="">все</option>
+          <option value="8">последние 8</option>
+          <option value="5">последние 5</option>
+          <option value="10">последние 10</option>
+          <option value="15">последние 15</option>
+        </select>
+      </label>
+      <label>До тура: <b id="roundVal">—</b> <input type="range" id="round" min="1" max="38" value="38"></label>
+      <button id="refresh" class="primary">Обновить с flashscore</button>
+    </div>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <div class="card table-wrap">
+    <table>
+      <thead><tr>
+        <th data-k="pos">#</th><th data-k="team">Команда</th><th data-k="rating">Рейтинг</th>
+        <th data-k="played">И</th><th data-k="scored">З</th><th data-k="conceded">П</th>
+        <th data-k="goal_diff">З−П</th><th data-k="balance">Δ</th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="8">Загрузка…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <b>Прогноз матча</b>
+    <div class="predict" style="margin-top:10px">
+      <label>Команда i <select id="teamA"></select></label>
+      <label>Команда j <select id="teamB"></select></label>
+      <label>Всего голов (з+п) <input type="number" id="total" step="0.1" min="0" style="width:90px"></label>
+    </div>
+    <div class="result" id="pred"></div>
+    <div class="meta">З(ожид.) = (з+п) × (1000 + (Rt<sub>i</sub> − Rt<sub>j</sub>)) / 2000; по умолчанию з+п — среднее по лиге.</div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Как считается рейтинг</summary>
+      <p>Для команды i по её матчам m против соперников j:</p>
+      <p><code>δ<sub>im</sub> = (З<sub>m</sub>+П<sub>m</sub>) / (ΣЗ<sub>i</sub>+ΣП<sub>i</sub>)</code> — вес матча,
+         <code>Δ<sub>i</sub> = (ΣЗ<sub>i</sub>−ΣП<sub>i</sub>) / (ΣЗ<sub>i</sub>+ΣП<sub>i</sub>)</code> — относительный баланс.</p>
+      <p><code>Rt<sub>i</sub> = Σ δ<sub>im</sub>·Rt<sub>j</sub> + 1000·Δ<sub>i</sub></code>, &nbsp; <code>(1/n)·ΣRt<sub>i</sub> = 2200</code></p>
+      <p>Система из n+1 уравнений решается совместно (метод наименьших квадратов; для совместной системы это точное решение).</p>
+    </details>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const state = { league: null, data: null, sort: { k: 'rating', dir: -1 } };
+
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+  return r.json();
+}
+
+async function init() {
+  const { leagues, seasons } = await api('/api/leagues');
+  $('season').innerHTML = seasons.map(s => `<option>${s}</option>`).join('');
+  $('tabs').innerHTML = leagues.map(l => `<button data-id="${l.id}">${l.name}</button>`).join('');
+  $('tabs').onclick = e => { const id = e.target.dataset.id; if (id) { selectLeague(id); } };
+  ['season', 'lastN'].forEach(id => $(id).onchange = load);
+  $('round').oninput = () => $('roundVal').textContent = $('round').value;
+  $('round').onchange = load;
+  $('refresh').onclick = refresh;
+  document.querySelectorAll('th').forEach(th => th.onclick = () => {
+    const k = th.dataset.k; if (k === 'pos') return;
+    state.sort = { k, dir: state.sort.k === k ? -state.sort.dir : (k === 'team' ? 1 : -1) };
+    render();
+  });
+  ['teamA', 'teamB', 'total'].forEach(id => $(id).oninput = predict);
+  selectLeague(leagues[0].id);
+}
+
+function selectLeague(id) {
+  state.league = id;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+  $('round').dataset.init = '';
+  load();
+}
+
+async function load() {
+  const p = new URLSearchParams({ league: state.league, season: $('season').value });
+  if ($('lastN').value) p.set('last_n', $('lastN').value);
+  if ($('round').dataset.init) p.set('upto_round', $('round').value);
+  $('meta').textContent = 'Загрузка…';
+  try {
+    state.data = await api('/api/rating?' + p);
+  } catch (e) {
+    $('meta').innerHTML = `<span class="err">Ошибка: ${e.message}</span>`; return;
+  }
+  const d = state.data;
+  if (!$('round').dataset.init) {
+    $('round').max = d.max_round; $('round').value = d.max_round; $('round').dataset.init = '1';
+  }
+  $('roundVal').textContent = $('round').value;
+  $('meta').textContent = `Матчей в расчёте: ${d.matches} · средне голов за матч: ${d.avg_goals.toFixed(2)} · данные обновлены: ${d.updated_at?.replace('T', ' ') ?? '—'}`;
+  const opts = d.table.map(r => r.team).sort().map(t => `<option>${t}</option>`).join('');
+  const [a, b] = [$('teamA').value, $('teamB').value];
+  $('teamA').innerHTML = opts; $('teamB').innerHTML = opts;
+  const names = d.table.map(r => r.team);
+  $('teamA').value = names.includes(a) ? a : d.table[0].team;
+  $('teamB').value = names.includes(b) ? b : d.table[1].team;
+  $('total').value = d.avg_goals.toFixed(2);
+  render(); predict();
+}
+
+function render() {
+  const d = state.data; if (!d) return;
+  const { k, dir } = state.sort;
+  const byRating = [...d.table].sort((a, b) => b.rating - a.rating);
+  const pos = new Map(byRating.map((r, i) => [r.team, i + 1]));
+  const rows = [...d.table].sort((a, b) => (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0) * dir);
+  const min = Math.min(...d.table.map(r => r.rating)), max = Math.max(...d.table.map(r => r.rating));
+  const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+  $('tbody').innerHTML = rows.map(r => {
+    const w = max > min ? 10 + 80 * (r.rating - min) / (max - min) : 50;
+    return `<tr>
+      <td>${pos.get(r.team)}</td><td>${r.team}</td>
+      <td class="rt"><div class="bar" style="width:${w}%"></div><span>${r.rating.toFixed(1)}</span></td>
+      <td>${r.played}</td><td>${r.scored}</td><td>${r.conceded}</td>
+      <td class="${cls(r.goal_diff)}">${r.goal_diff > 0 ? '+' : ''}${r.goal_diff}</td>
+      <td class="${cls(r.balance)}">${r.balance.toFixed(3)}</td></tr>`;
+  }).join('');
+}
+
+function predict() {
+  const d = state.data; if (!d) return;
+  const rt = t => d.table.find(r => r.team === t)?.rating ?? 0;
+  const a = $('teamA').value, b = $('teamB').value, total = parseFloat($('total').value) || 0;
+  const ra = rt(a), rb = rt(b);
+  const ga = total * (1000 + (ra - rb)) / 2000;
+  $('pred').textContent = `${a} ${ga.toFixed(2)} : ${(total - ga).toFixed(2)} ${b}  (ΔRt = ${(ra - rb).toFixed(1)})`;
+}
+
+async function refresh() {
+  $('refresh').disabled = true; $('meta').textContent = 'Скачиваю с flashscore…';
+  try {
+    await api(`/api/refresh?league=${state.league}&season=${$('season').value}`, { method: 'POST' });
+    $('round').dataset.init = '';
+    await load();
+  } catch (e) {
+    $('meta').innerHTML = `<span class="err">Ошибка обновления: ${e.message}</span>`;
+  } finally { $('refresh').disabled = false; }
+}
+
+init();
+</script>
+</body>
+</html>
