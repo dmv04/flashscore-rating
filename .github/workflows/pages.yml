@@ -27,6 +27,8 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Скачать матчи и собрать страницу
+        env:
+          TZ: Europe/Moscow
         run: python -m share.build _site/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
