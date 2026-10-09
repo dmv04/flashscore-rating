@@ -2,204 +2,281 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Рейтинг команд</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Рейтинг СЛУ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+  /* Layout: одна колонка — шапка, вкладки, панель фильтров, таблица рейтинга или карточки туров */
   :root {
-    --bg: #f6f7f9; --card: #fff; --text: #1b1f24; --muted: #6b7280; --line: #e5e7eb;
-    --accent: #2563eb; --pos: #16a34a; --neg: #dc2626; --bar: #dbe6fd;
+    --bg: #f3f5f2; --surface: #ffffff; --ink: #18211b; --muted: #5f6b63; --line: #dde3dc;
+    --pitch: #1f6b45; --pitch-soft: #dcebe2; --chalk: #ffffff;
+    --pos: #1f7a46; --neg: #b8352b; --draw: #9aa59d;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "IBM Plex Sans", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1115; --card: #171a21; --text: #e6e8eb; --muted: #9aa3ae; --line: #2a2f3a;
-            --accent: #60a5fa; --pos: #4ade80; --neg: #f87171; --bar: #1e2a44; }
-  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0f1411; --surface: #161d18; --ink: #e4ebe5; --muted: #95a399; --line: #27312a;
+    --pitch: #4fb37e; --pitch-soft: #1d3326; --chalk: #0f1411; --pos: #5cc98c; --neg: #f07a6f; --draw: #5d6a61; color-scheme: dark; } }
+  :root[data-theme="dark"] {
+    --bg: #0f1411; --surface: #161d18; --ink: #e4ebe5; --muted: #95a399; --line: #27312a;
+    --pitch: #4fb37e; --pitch-soft: #1d3326; --chalk: #0f1411; --pos: #5cc98c; --neg: #f07a6f; --draw: #5d6a61; color-scheme: dark; }
+
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
-  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .sub { color: var(--muted); margin-bottom: 20px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; }
-  label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 12px; }
-  select, input, button { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
-  input[type=range] { padding: 0; width: 180px; }
-  button { cursor: pointer; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .tabs { display: flex; gap: 6px; }
-  .tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .meta { color: var(--muted); font-size: 12px; margin-top: 10px; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-  th { color: var(--muted); font-weight: 500; font-size: 12px; cursor: pointer; user-select: none; }
-  th:nth-child(2), td:nth-child(2) { text-align: left; }
-  td.rt { position: relative; font-weight: 600; min-width: 150px; }
-  td.rt .bar { position: absolute; left: 8px; top: 6px; bottom: 6px; background: var(--bar); border-radius: 3px; z-index: 0; }
-  td.rt span { position: relative; z-index: 1; }
-  .pos { color: var(--pos); } .neg { color: var(--neg); }
-  .predict { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-  .result { font-size: 18px; font-weight: 600; margin-top: 12px; }
-  .err { color: var(--neg); }
-  details summary { cursor: pointer; color: var(--muted); }
-  code { font-size: 12px; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+  .wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 20px; }
+  .wrap > * { min-width: 0; }
+
+  header { display: grid; gap: 6px; }
+  .eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--pitch); }
+  h1 { font: 700 clamp(34px, 6vw, 52px)/1 var(--display); margin: 0; text-transform: uppercase; letter-spacing: .01em; text-wrap: balance; }
+  .lead { color: var(--muted); margin: 0; max-width: 64ch; }
+
+  nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+  nav.tabs button { font: 700 20px var(--display); letter-spacing: .03em; text-transform: uppercase; background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); padding: 6px 12px 8px; cursor: pointer; }
+  nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--pitch); }
+
+  .panel { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end; }
+  label { display: grid; gap: 4px; font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  select, button.btn { font: 400 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+  button.btn { cursor: pointer; }
+  button.btn.primary { background: var(--pitch); border-color: var(--pitch); color: var(--chalk); font-weight: 500; }
+  button.btn:disabled { opacity: .6; cursor: progress; }
+  :focus-visible { outline: 2px solid var(--pitch); outline-offset: 2px; }
+  .stat { font: 400 12px var(--mono); color: var(--muted); }
+  .stat.err { color: var(--neg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { font: 500 13px var(--body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--pitch); border-color: var(--pitch); color: var(--chalk); }
+
+  .board { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 600px; }
+  th { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  th.l, td.l { text-align: left; }
+  td.pos-n { font: 500 13px var(--mono); color: var(--muted); width: 36px; }
+  td.team { font-weight: 600; }
+  td.lg { color: var(--muted); font-size: 13px; }
+  td.rt { width: 36%; min-width: 180px; }
+  .rtcell { display: grid; grid-template-columns: 1fr 56px; gap: 10px; align-items: center; }
+  .track { height: 8px; background: var(--pitch-soft); border-radius: 4px; position: relative; }
+  .track i { position: absolute; top: 0; bottom: 0; background: var(--pitch); border-radius: 4px; }
+  .track .mid { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .6; }
+  .rtnum { font: 500 14px var(--mono); }
+  .num { font: 400 13px var(--mono); }
+  .up { color: var(--pos); } .down { color: var(--neg); }
+
+  .strength { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .strength div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; }
+  .strength b { font-weight: 600; }
+  .strength span { font: 400 12px var(--mono); color: var(--muted); }
+
+  .round { display: grid; gap: 10px; }
+  .round h2 { font: 700 24px var(--display); text-transform: uppercase; letter-spacing: .02em; margin: 0; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .round h2 small { font: 500 12px var(--mono); letter-spacing: .06em; color: var(--muted); }
+  .games { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .game { display: grid; grid-template-columns: 74px minmax(0, 1fr) 96px minmax(0, 1fr) 200px; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .game:last-child { border-bottom: 0; }
+  .when { font: 400 12px/1.3 var(--mono); color: var(--muted); }
+  .side { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side small { display: block; font: 400 12px var(--mono); color: var(--muted); }
+  .side.away { text-align: right; }
+  .xg { text-align: center; font: 700 26px/1 var(--display); color: var(--pitch); white-space: nowrap; }
+  .xg small { display: block; font: 400 11px var(--mono); color: var(--muted); margin-top: 3px; }
+  .probs { display: grid; gap: 4px; }
+  .probbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; }
+  .probbar i:nth-child(1) { background: var(--pitch); } .probbar i:nth-child(2) { background: var(--draw); } .probbar i:nth-child(3) { background: var(--neg); }
+  .problbl { display: flex; justify-content: space-between; font: 400 12px var(--mono); color: var(--muted); }
+  .empty { color: var(--muted); padding: 14px; }
+  @media (max-width: 680px) {
+    .game { grid-template-columns: minmax(0, 1fr) 84px minmax(0, 1fr); }
+    .when { grid-column: 1 / -1; }
+    .probs { grid-column: 1 / -1; }
+  }
+
+  details { border-top: 1px solid var(--line); padding-top: 14px; }
+  summary { cursor: pointer; font: 600 18px var(--display); text-transform: uppercase; letter-spacing: .03em; }
+  details p { max-width: 72ch; }
+  code { font: 13px var(--mono); background: var(--pitch-soft); padding: 1px 5px; border-radius: 4px; }
+  .note { font-size: 13px; color: var(--muted); }
 </style>
 </head>
 <body>
-<main>
-  <h1>Рейтинг команд по балансу голов</h1>
-  <div class="sub">Данные: flashscore.com · расчёт: система линейных уравнений, средний рейтинг турнира 2200</div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow">Данные flashscore.com</div>
+    <h1>Рейтинг команд по балансу голов</h1>
+    <p class="lead">Рейтинг — решение системы линейных уравнений по забитым и пропущенным с учётом силы соперников. Средний рейтинг турнира — 2200.</p>
+  </header>
 
-  <div class="card">
-    <div class="controls">
-      <div class="tabs" id="tabs"></div>
-      <label>Сезон <select id="season"></select></label>
-      <label>Матчей команды
-        <select id="lastN">
-          <option value="">все</option>
-          <option value="8">последние 8</option>
-          <option value="5">последние 5</option>
-          <option value="10">последние 10</option>
-          <option value="15">последние 15</option>
-        </select>
-      </label>
-      <label>До тура: <b id="roundVal">—</b> <input type="range" id="round" min="1" max="38" value="38"></label>
-      <button id="refresh" class="primary">Обновить с flashscore</button>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-rating" aria-selected="true" data-tab="rating">Рейтинг</button>
+    <button role="tab" id="tab-pred" aria-selected="false" data-tab="pred">Прогнозы</button>
+  </nav>
+
+  <div class="panel">
+    <label for="scope" data-for="rating">Турнир <select id="scope"></select></label>
+    <label for="lastN">Матчей команды
+      <select id="lastN">
+        <option value="">все</option><option value="5">последние 5</option>
+        <option value="8">последние 8</option><option value="10">последние 10</option>
+      </select>
+    </label>
+    <button class="btn primary" id="refresh">Обновить с flashscore</button>
+    <div class="stat" id="stat"></div>
+  </div>
+
+  <section id="view-rating">
+    <div class="chips" id="worldFilter" hidden></div>
+    <div class="board" style="margin-top:12px">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
     </div>
-    <div class="meta" id="meta"></div>
-  </div>
-
-  <div class="card table-wrap">
-    <table>
-      <thead><tr>
-        <th data-k="pos">#</th><th data-k="team">Команда</th><th data-k="rating">Рейтинг</th>
-        <th data-k="played">И</th><th data-k="scored">З</th><th data-k="conceded">П</th>
-        <th data-k="goal_diff">З−П</th><th data-k="balance">Δ</th>
-      </tr></thead>
-      <tbody id="tbody"><tr><td colspan="8">Загрузка…</td></tr></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <b>Прогноз матча</b>
-    <div class="predict" style="margin-top:10px">
-      <label>Команда i <select id="teamA"></select></label>
-      <label>Команда j <select id="teamB"></select></label>
-      <label>Всего голов (з+п) <input type="number" id="total" step="0.1" min="0" style="width:90px"></label>
+    <div id="strengthWrap" hidden style="margin-top:16px; display:grid; gap:8px">
+      <div class="note">Сила лиги — поправка к национальному рейтингу по матчам еврокубков (текущий и прошлый сезон); в скобках — число межлиговых матчей.</div>
+      <div class="strength" id="strength"></div>
     </div>
-    <div class="result" id="pred"></div>
-    <div class="meta">З(ожид.) = (з+п) × (1000 + (Rt<sub>i</sub> − Rt<sub>j</sub>)) / 2000; по умолчанию з+п — среднее по лиге.</div>
-  </div>
+  </section>
 
-  <div class="card">
-    <details>
-      <summary>Как считается рейтинг</summary>
-      <p>Для команды i по её матчам m против соперников j:</p>
-      <p><code>δ<sub>im</sub> = (З<sub>m</sub>+П<sub>m</sub>) / (ΣЗ<sub>i</sub>+ΣП<sub>i</sub>)</code> — вес матча,
-         <code>Δ<sub>i</sub> = (ΣЗ<sub>i</sub>−ΣП<sub>i</sub>) / (ΣЗ<sub>i</sub>+ΣП<sub>i</sub>)</code> — относительный баланс.</p>
-      <p><code>Rt<sub>i</sub> = Σ δ<sub>im</sub>·Rt<sub>j</sub> + 1000·Δ<sub>i</sub></code>, &nbsp; <code>(1/n)·ΣRt<sub>i</sub> = 2200</code></p>
-      <p>Система из n+1 уравнений решается совместно (метод наименьших квадратов; для совместной системы это точное решение).</p>
-    </details>
-  </div>
-</main>
+  <section id="view-pred" hidden>
+    <div class="chips" id="countryFilter"></div>
+    <div id="rounds" style="display:grid; gap:24px; margin-top:16px"></div>
+  </section>
+
+  <details>
+    <summary>Как считается</summary>
+    <p>Для команды i по её матчам против соперников j: вес матча <code>δ = (З+П)ₘ / (ΣЗ+ΣП)</code>, относительный баланс <code>Δᵢ = (ΣЗ−ΣП)/(ΣЗ+ΣП)</code>. Уравнения: <code>Rtᵢ = Σ δ·Rtⱼ + 1000·Δᵢ</code> для каждой команды и <code>(1/n)·ΣRt = 2200</code>.</p>
+    <p><b>Мировой рейтинг</b> (без России): национальный рейтинг плюс поправка силы лиги. Поправки находятся из тех же уравнений <code>Rtᵢ − Rtⱼ = 1000·Δ</code> по межлиговым матчам Лиги чемпионов, Лиги Европы и Лиги конференций текущего и прошлого сезона. Среднее по всем командам — 2200.</p>
+    <p><b>Прогноз</b>: ожидаемые голы <code>З = (з+п) × (1000 + (Rtᵢ − Rtⱼ)) / 2000</code>, где з+п — среднее число голов в матчах обеих команд. Вероятности исходов и самый вероятный счёт — по распределению Пуассона с этими ожиданиями.</p>
+  </details>
+</div>
 
 <script>
 const $ = id => document.getElementById(id);
-const state = { league: null, data: null, sort: { k: 'rating', dir: -1 } };
+const st = { tab: 'rating', meta: null, data: null, worldCountry: '', country: '' };
+const STATIC = window.STATIC_DATA || null;
 
-async function api(url, opts) {
-  const r = await fetch(url, opts);
+async function api(path, opts) {
+  if (STATIC) {
+    if (!(path in STATIC)) throw new Error('нет данных для ' + path);
+    return STATIC[path];
+  }
+  const r = await fetch(path, opts);
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
   return r.json();
 }
 
+const leagueName = id => { const l = st.meta.leagues.find(l => l.id === id); return l ? `${l.country}` : id; };
+const fmtUpd = s => s ? s.replace('T', ' ').slice(0, 16) : '—';
+const q = () => $('lastN').value ? `&last_n=${$('lastN').value}` : '';
+
 async function init() {
-  const { leagues, seasons } = await api('/api/leagues');
-  $('season').innerHTML = seasons.map(s => `<option>${s}</option>`).join('');
-  $('tabs').innerHTML = leagues.map(l => `<button data-id="${l.id}">${l.name}</button>`).join('');
-  $('tabs').onclick = e => { const id = e.target.dataset.id; if (id) { selectLeague(id); } };
-  ['season', 'lastN'].forEach(id => $(id).onchange = load);
-  $('round').oninput = () => $('roundVal').textContent = $('round').value;
-  $('round').onchange = load;
-  $('refresh').onclick = refresh;
-  document.querySelectorAll('th').forEach(th => th.onclick = () => {
-    const k = th.dataset.k; if (k === 'pos') return;
-    state.sort = { k, dir: state.sort.k === k ? -state.sort.dir : (k === 'team' ? 1 : -1) };
-    render();
-  });
-  ['teamA', 'teamB', 'total'].forEach(id => $(id).oninput = predict);
-  selectLeague(leagues[0].id);
+  st.meta = await api('/api/meta');
+  $('eyebrow').textContent = `Сезон ${st.meta.season.replace('-', '/')} · данные flashscore.com`;
+  $('scope').innerHTML = `<option value="world">Мир (без России)</option>` +
+    st.meta.leagues.map(l => `<option value="${l.id}">${l.country} — ${l.name}</option>`).join('');
+  if (STATIC) $('refresh').hidden = true;
+  document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  $('scope').onchange = load; $('lastN').onchange = load; $('refresh').onclick = refresh;
+  const hash = location.hash.slice(1);
+  setTab(hash === 'pred' ? 'pred' : 'rating');
 }
 
-function selectLeague(id) {
-  state.league = id;
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.id === id));
-  $('round').dataset.init = '';
+function setTab(tab) {
+  st.tab = tab;
+  document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  $('view-rating').hidden = tab !== 'rating';
+  $('view-pred').hidden = tab !== 'pred';
+  document.querySelector('[data-for="rating"]').hidden = tab !== 'rating';
   load();
 }
 
 async function load() {
-  const p = new URLSearchParams({ league: state.league, season: $('season').value });
-  if ($('lastN').value) p.set('last_n', $('lastN').value);
-  if ($('round').dataset.init) p.set('upto_round', $('round').value);
-  $('meta').textContent = 'Загрузка…';
+  $('stat').className = 'stat'; $('stat').textContent = 'Загрузка…';
   try {
-    state.data = await api('/api/rating?' + p);
-  } catch (e) {
-    $('meta').innerHTML = `<span class="err">Ошибка: ${e.message}</span>`; return;
-  }
-  const d = state.data;
-  if (!$('round').dataset.init) {
-    $('round').max = d.max_round; $('round').value = d.max_round; $('round').dataset.init = '1';
-  }
-  $('roundVal').textContent = $('round').value;
-  $('meta').textContent = `Матчей в расчёте: ${d.matches} · средне голов за матч: ${d.avg_goals.toFixed(2)} · данные обновлены: ${d.updated_at?.replace('T', ' ') ?? '—'}`;
-  const opts = d.table.map(r => r.team).sort().map(t => `<option>${t}</option>`).join('');
-  const [a, b] = [$('teamA').value, $('teamB').value];
-  $('teamA').innerHTML = opts; $('teamB').innerHTML = opts;
-  const names = d.table.map(r => r.team);
-  $('teamA').value = names.includes(a) ? a : d.table[0].team;
-  $('teamB').value = names.includes(b) ? b : d.table[1].team;
-  $('total').value = d.avg_goals.toFixed(2);
-  render(); predict();
+    if (st.tab === 'rating') await loadRating(); else await loadPred();
+  } catch (e) { $('stat').className = 'stat err'; $('stat').textContent = 'Ошибка: ' + e.message; }
 }
 
-function render() {
-  const d = state.data; if (!d) return;
-  const { k, dir } = state.sort;
-  const byRating = [...d.table].sort((a, b) => b.rating - a.rating);
-  const pos = new Map(byRating.map((r, i) => [r.team, i + 1]));
-  const rows = [...d.table].sort((a, b) => (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0) * dir);
-  const min = Math.min(...d.table.map(r => r.rating)), max = Math.max(...d.table.map(r => r.rating));
-  const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+async function loadRating() {
+  const scope = $('scope').value;
+  const d = await api(`/api/rating?scope=${scope}${q()}`);
+  st.data = d;
+  $('stat').textContent = `Команд: ${d.table.length} · обновлено ${fmtUpd(d.updated_at)}`;
+  const isWorld = scope === 'world';
+  $('worldFilter').hidden = !isWorld;
+  $('strengthWrap').hidden = !isWorld;
+  if (isWorld) {
+    const countries = [...new Set(d.table.map(r => r.league))];
+    $('worldFilter').innerHTML = [['', 'Все страны'], ...countries.map(c => [c, leagueName(c)])]
+      .map(([v, t]) => `<button data-v="${v}" aria-pressed="${st.worldCountry === v}">${t}</button>`).join('');
+    $('worldFilter').onclick = e => { const b = e.target.closest('button'); if (!b) return; st.worldCountry = b.dataset.v; loadRating(); };
+    $('strength').innerHTML = Object.entries(d.leagues).sort((a, b) => b[1].offset - a[1].offset)
+      .map(([lg, s]) => `<div><b>${leagueName(lg)}</b><span>${s.offset > 0 ? '+' : ''}${s.offset.toFixed(0)} (${s.links})</span></div>`).join('');
+  }
+  renderTable(isWorld);
+}
+
+function renderTable(isWorld) {
+  const d = st.data;
+  const all = d.table;
+  const rows = isWorld && st.worldCountry ? all.filter(r => r.league === st.worldCountry) : all;
+  $('thead').innerHTML = `<th class="l">#</th><th class="l">Команда</th>${isWorld ? '<th class="l">Страна</th>' : ''}<th class="l">Рейтинг</th><th>И</th><th>З</th><th>П</th><th>З−П</th><th>Δ</th>`;
+  const vals = all.map(r => r.rating);
+  const lo = Math.min(...vals, 2200) - 50, hi = Math.max(...vals, 2200) + 50;
+  const pct = v => (v - lo) / (hi - lo) * 100, mid = pct(2200);
+  const sign = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+  const rank = new Map(all.map((r, i) => [r, i + 1]));
   $('tbody').innerHTML = rows.map(r => {
-    const w = max > min ? 10 + 80 * (r.rating - min) / (max - min) : 50;
-    return `<tr>
-      <td>${pos.get(r.team)}</td><td>${r.team}</td>
-      <td class="rt"><div class="bar" style="width:${w}%"></div><span>${r.rating.toFixed(1)}</span></td>
-      <td>${r.played}</td><td>${r.scored}</td><td>${r.conceded}</td>
-      <td class="${cls(r.goal_diff)}">${r.goal_diff > 0 ? '+' : ''}${r.goal_diff}</td>
-      <td class="${cls(r.balance)}">${r.balance.toFixed(3)}</td></tr>`;
+    const a = Math.min(pct(r.rating), mid), w = Math.abs(pct(r.rating) - mid);
+    return `<tr><td class="l pos-n">${rank.get(r)}</td><td class="l team">${r.team}</td>
+      ${isWorld ? `<td class="l lg">${leagueName(r.league)}</td>` : ''}
+      <td class="l rt"><div class="rtcell"><div class="track"><i style="left:${a}%;width:${w}%"></i><span class="mid" style="left:${mid}%"></span></div><span class="rtnum">${r.rating.toFixed(0)}</span></div></td>
+      <td class="num">${r.played}</td><td class="num">${r.scored}</td><td class="num">${r.conceded}</td>
+      <td class="num ${sign(r.goal_diff)}">${r.goal_diff > 0 ? '+' : ''}${r.goal_diff}</td>
+      <td class="num ${sign(r.balance)}">${r.balance.toFixed(3)}</td></tr>`;
   }).join('');
 }
 
-function predict() {
-  const d = state.data; if (!d) return;
-  const rt = t => d.table.find(r => r.team === t)?.rating ?? 0;
-  const a = $('teamA').value, b = $('teamB').value, total = parseFloat($('total').value) || 0;
-  const ra = rt(a), rb = rt(b);
-  const ga = total * (1000 + (ra - rb)) / 2000;
-  $('pred').textContent = `${a} ${ga.toFixed(2)} : ${(total - ga).toFixed(2)} ${b}  (ΔRt = ${(ra - rb).toFixed(1)})`;
+async function loadPred() {
+  const d = await api(`/api/predictions?${q().slice(1)}`);
+  st.data = d;
+  const games = d.leagues.reduce((a, l) => a + l.games.length, 0);
+  $('stat').textContent = `Матчей в ближайших турах: ${games}`;
+  $('countryFilter').innerHTML = [['', 'Все страны'], ...d.leagues.map(l => [l.league, l.country])]
+    .map(([v, t]) => `<button data-v="${v}" aria-pressed="${st.country === v}">${t}</button>`).join('');
+  $('countryFilter').onclick = e => { const b = e.target.closest('button'); if (!b) return; st.country = b.dataset.v; loadPred(); };
+  const dt = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', weekday: 'short' });
+  const tm = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const pctf = p => Math.round(p * 100);
+  $('rounds').innerHTML = d.leagues.filter(l => !st.country || l.league === st.country).map(l => `
+    <section class="round">
+      <h2>${l.country} · ${l.name} <small>${l.round ? l.round + '-й тур' : 'тур не найден'}</small></h2>
+      <div class="games">${l.games.length ? l.games.map(g => {
+        const s = new Date(g.start);
+        return `<div class="game">
+          <div class="when">${dt.format(s)}<br>${tm.format(s)}</div>
+          <div class="side">${g.home}<small>${g.home_rating.toFixed(0)}</small></div>
+          <div class="xg">${g.home_goals.toFixed(1)} : ${g.away_goals.toFixed(1)}<small>счёт ${g.score}</small></div>
+          <div class="side away">${g.away}<small>${g.away_rating.toFixed(0)}</small></div>
+          <div class="probs">
+            <div class="probbar"><i style="width:${g.p_home * 100}%"></i><i style="width:${g.p_draw * 100}%"></i><i style="width:${g.p_away * 100}%"></i></div>
+            <div class="problbl"><span>П1 ${pctf(g.p_home)}%</span><span>Х ${pctf(g.p_draw)}%</span><span>П2 ${pctf(g.p_away)}%</span></div>
+          </div></div>`;
+      }).join('') : '<div class="empty">Нет предстоящих матчей</div>'}</div>
+    </section>`).join('');
 }
 
 async function refresh() {
-  $('refresh').disabled = true; $('meta').textContent = 'Скачиваю с flashscore…';
-  try {
-    await api(`/api/refresh?league=${state.league}&season=${$('season').value}`, { method: 'POST' });
-    $('round').dataset.init = '';
-    await load();
-  } catch (e) {
-    $('meta').innerHTML = `<span class="err">Ошибка обновления: ${e.message}</span>`;
-  } finally { $('refresh').disabled = false; }
+  $('refresh').disabled = true; $('stat').className = 'stat'; $('stat').textContent = 'Скачиваю все турниры с flashscore, около 30 секунд…';
+  try { st.meta = await api('/api/refresh', { method: 'POST' }); await load(); }
+  catch (e) { $('stat').className = 'stat err'; $('stat').textContent = 'Ошибка обновления: ' + e.message; }
+  finally { $('refresh').disabled = false; }
 }
 
 init();
