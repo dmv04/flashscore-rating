@@ -45,4 +45,8 @@ python -m venv .venv
 
 ## Страница для шаринга
 
-`python -m share.build out.html` — интерфейс со встроенным снимком данных, работает без сервера.
+`python -m share.build out.html` — интерфейс со встроенным снимком данных, работает без сервера
+(`--fragment` — без `<head>`, для публикации в Claude).
+
+`.github/workflows/pages.yml` каждый день (и после пуша в main) скачивает свежие матчи,
+собирает эту страницу и публикует на GitHub Pages: https://dmv04.github.io/flashscore-rating/

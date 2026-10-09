@@ -1,7 +1,7 @@
-"""Собирает автономную страницу для шаринга: интерфейс app/static/index.html
+"""Собирает автономную страницу для шаринга (GitHub Pages, файл другу): интерфейс app/static/index.html
 со встроенными ответами API (снимок кэша), без сервера.
 
-    python -m share.build <output.html>
+    python -m share.build <output.html> [--fragment]
 """
 from __future__ import annotations
 
@@ -28,14 +28,16 @@ def snapshot() -> dict:
     return data
 
 
-def build(out: Path) -> None:
+def build(out: Path, fragment: bool = False) -> None:
+    """fragment=True — без <html>/<head>/<body>, для публикации внутрь готового каркаса (Claude)."""
     html = INDEX.read_text(encoding="utf-8")
-    # страница публикуется внутрь готового каркаса — убираем свой
-    html = re.sub(r"<!doctype html>|</?html[^>]*>|</?head>|</?body>|<meta [^>]*>", "", html, flags=re.I)
+    if fragment:
+        html = re.sub(r"<!doctype html>|</?html[^>]*>|</?head>|</?body>|<meta [^>]*>", "", html, flags=re.I)
     data = json.dumps(snapshot(), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace("<script>", f"<script>window.STATIC_DATA={data};</script>\n<script>", 1)
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html.strip() + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
-    build(Path(sys.argv[1]))
+    build(Path(sys.argv[1]), fragment="--fragment" in sys.argv)
