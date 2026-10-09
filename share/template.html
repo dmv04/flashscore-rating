@@ -1,0 +1,215 @@
+<title>Рейтинг СЛУ 2025/26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: одна колонка — шапка-табло, панель фильтров, таблица рейтинга, прогноз, методика */
+  :root {
+    --bg: #f3f5f2; --surface: #ffffff; --ink: #18211b; --muted: #5f6b63; --line: #dde3dc;
+    --pitch: #1f6b45; --pitch-soft: #dcebe2; --chalk: #ffffff;
+    --pos: #1f7a46; --neg: #b8352b;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "IBM Plex Sans", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0f1411; --surface: #161d18; --ink: #e4ebe5; --muted: #95a399; --line: #27312a;
+    --pitch: #4fb37e; --pitch-soft: #1d3326; --chalk: #0f1411; --pos: #5cc98c; --neg: #f07a6f; color-scheme: dark; } }
+  :root[data-theme="dark"] {
+    --bg: #0f1411; --surface: #161d18; --ink: #e4ebe5; --muted: #95a399; --line: #27312a;
+    --pitch: #4fb37e; --pitch-soft: #1d3326; --chalk: #0f1411; --pos: #5cc98c; --neg: #f07a6f; color-scheme: dark; }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+  .wrap { max-width: 940px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 20px; }
+
+  header { display: grid; gap: 6px; }
+  .eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--pitch); }
+  h1 { font: 700 clamp(34px, 6vw, 52px)/1 var(--display); margin: 0; text-transform: uppercase; letter-spacing: .01em; text-wrap: balance; }
+  .lead { color: var(--muted); margin: 0; max-width: 62ch; }
+
+  .panel { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  .seg button { font: 600 15px var(--display); letter-spacing: .04em; text-transform: uppercase; border: 0; background: none; color: var(--muted); padding: 9px 16px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--pitch); color: var(--chalk); }
+  label { display: grid; gap: 4px; font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  select, input[type=number] { font: 400 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+  input[type=range] { width: 190px; accent-color: var(--pitch); }
+  :focus-visible { outline: 2px solid var(--pitch); outline-offset: 2px; }
+  .stat { font: 400 12px var(--mono); color: var(--muted); }
+
+  .board { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 560px; }
+  th { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; }
+  tr:last-child td { border-bottom: 0; }
+  th.l, td.l { text-align: left; }
+  td.pos-n { font: 500 13px var(--mono); color: var(--muted); width: 36px; }
+  td.team { font-weight: 600; }
+  td.rt { width: 42%; }
+  .rtcell { display: grid; grid-template-columns: 1fr 64px; gap: 10px; align-items: center; }
+  .track { height: 8px; background: var(--pitch-soft); border-radius: 4px; position: relative; }
+  .track i { position: absolute; top: 0; bottom: 0; background: var(--pitch); border-radius: 4px; }
+  .track .mid { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .6; }
+  .rtnum { font: 500 14px var(--mono); }
+  .num { font: 400 13px var(--mono); }
+  .up { color: var(--pos); } .down { color: var(--neg); }
+
+  .predict { display: grid; gap: 14px; }
+  h2 { font: 700 24px var(--display); text-transform: uppercase; letter-spacing: .02em; margin: 0; }
+  .score { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .score .side { display: grid; gap: 6px; min-width: 0; }
+  .score .side:last-child { text-align: right; }
+  .score select { width: 100%; }
+  .goals { font: 700 clamp(36px, 8vw, 56px)/1 var(--display); color: var(--pitch); }
+  .vs { font: 500 12px var(--mono); color: var(--muted); text-align: center; }
+  .note { font-size: 13px; color: var(--muted); max-width: 70ch; }
+  details { border-top: 1px solid var(--line); padding-top: 14px; }
+  summary { cursor: pointer; font: 600 18px var(--display); text-transform: uppercase; letter-spacing: .03em; }
+  code { font: 13px var(--mono); background: var(--pitch-soft); padding: 1px 5px; border-radius: 4px; }
+  details p { max-width: 70ch; }
+  @media (max-width: 520px) { .score { grid-template-columns: 1fr; } .score .side:last-child { text-align: left; } .vs { text-align: left; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Сезон 2025/26 · данные flashscore.com</div>
+    <h1>Рейтинг команд по балансу голов</h1>
+    <p class="lead">Рейтинг считается решением системы линейных уравнений: учитываются забитые и пропущенные в каждом матче и сила соперника. Средний рейтинг турнира — 2200.</p>
+  </header>
+
+  <div class="panel">
+    <div class="seg" id="tabs" role="group" aria-label="Лига"></div>
+    <label for="lastN">Матчей команды
+      <select id="lastN">
+        <option value="0">все</option><option value="5">последние 5</option>
+        <option value="8">последние 8</option><option value="10">последние 10</option><option value="15">последние 15</option>
+      </select>
+    </label>
+    <label for="round">До тура <span id="roundVal"></span>
+      <input type="range" id="round" min="1" max="38" value="38">
+    </label>
+    <div class="stat" id="stat"></div>
+  </div>
+
+  <div class="board">
+    <table>
+      <thead><tr><th class="l">#</th><th class="l">Команда</th><th class="l">Рейтинг</th><th>И</th><th>З</th><th>П</th><th>З−П</th><th>Δ</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <section class="predict">
+    <h2>Прогноз матча</h2>
+    <div class="score">
+      <div class="side"><select id="teamA" aria-label="Команда i"></select><div class="goals" id="gA">–</div></div>
+      <div class="vs">голов всего<br><input type="number" id="total" step="0.1" min="0" style="width:80px" aria-label="Всего голов"><br><span id="dRt"></span></div>
+      <div class="side"><select id="teamB" aria-label="Команда j"></select><div class="goals" id="gB">–</div></div>
+    </div>
+    <p class="note">Ожидаемые голы: <code>З = (з+п) × (1000 + (Rtᵢ − Rtⱼ)) / 2000</code>. По умолчанию з+п — среднее число голов за матч в выбранной выборке.</p>
+  </section>
+
+  <details>
+    <summary>Как считается рейтинг</summary>
+    <p>Для команды i по её матчам против соперников j: вес матча <code>δ = (З+П)ₘ / (ΣЗ+ΣП)</code>, относительный баланс <code>Δᵢ = (ΣЗ−ΣП)/(ΣЗ+ΣП)</code>.</p>
+    <p>Уравнения: <code>Rtᵢ = Σ δ·Rtⱼ + 1000·Δᵢ</code> для каждой команды и <code>(1/n)·ΣRt = 2200</code>. Система решается методом наименьших квадратов; на полном сезоне решение точное.</p>
+    <p class="note">Данные обновлены __UPDATED__.</p>
+  </details>
+</div>
+
+<script>
+const DATA = __DATA__;
+const AVG = 2200, SCALE = 1000;
+const $ = id => document.getElementById(id);
+const st = { league: Object.keys(DATA.leagues)[0] };
+
+function solve(M, v) { // Гаусс с выбором главного элемента
+  const n = v.length, A = M.map((r, i) => [...r, v[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]];
+    for (let r = c + 1; r < n; r++) { const f = A[r][c] / A[c][c]; for (let k = c; k <= n; k++) A[r][k] -= f * A[c][k]; }
+  }
+  const x = Array(n).fill(0);
+  for (let r = n - 1; r >= 0; r--) { let s = A[r][n]; for (let k = r + 1; k < n; k++) s -= A[r][k] * x[k]; x[r] = s / A[r][r]; }
+  return x;
+}
+
+function compute(matches, lastN) {
+  const games = {};
+  for (const m of matches) {
+    (games[m[1]] ||= []).push([m[2], m[3], m[4]]);
+    (games[m[2]] ||= []).push([m[1], m[4], m[3]]);
+  }
+  const teams = Object.keys(games).sort(), n = teams.length, idx = Object.fromEntries(teams.map((t, i) => [t, i]));
+  const A = Array.from({ length: n + 1 }, () => Array(n).fill(0)), b = Array(n + 1).fill(0), rows = [];
+  for (const t of teams) {
+    const gl = lastN ? games[t].slice(-lastN) : games[t], i = idx[t];
+    const s = gl.reduce((a, g) => a + g[1], 0), c = gl.reduce((a, g) => a + g[2], 0), tot = s + c;
+    A[i][i] = 1;
+    let delta = 0;
+    if (tot) { for (const [o, g, p] of gl) A[i][idx[o]] -= (g + p) / tot; delta = (s - c) / tot; b[i] = SCALE * delta; }
+    else b[i] = AVG;
+    rows.push({ team: t, played: gl.length, s, c, delta });
+  }
+  A[n].fill(1 / n); b[n] = AVG;
+  // нормальные уравнения AᵀA·x = Aᵀb
+  const AtA = teams.map((_, i) => teams.map((_, j) => A.reduce((a, r) => a + r[i] * r[j], 0)));
+  const Atb = teams.map((_, i) => A.reduce((a, r, k) => a + r[i] * b[k], 0));
+  const x = solve(AtA, Atb);
+  rows.forEach(r => r.rt = x[idx[r.team]]);
+  return rows.sort((a, b) => b.rt - a.rt);
+}
+
+function render() {
+  const L = DATA.leagues[st.league];
+  const upto = +$('round').value, lastN = +$('lastN').value;
+  $('roundVal').textContent = upto;
+  const ms = L.matches.filter(m => m[0] <= upto);
+  const rows = compute(ms, lastN);
+  st.rows = rows;
+  const goals = ms.reduce((a, m) => a + m[3] + m[4], 0);
+  st.avgGoals = ms.length ? goals / ms.length : 0;
+  $('stat').textContent = `${ms.length} матчей · ${st.avgGoals.toFixed(2)} гола за матч`;
+
+  const lo = Math.min(...rows.map(r => r.rt), AVG) - 50, hi = Math.max(...rows.map(r => r.rt), AVG) + 50;
+  const pct = v => (v - lo) / (hi - lo) * 100, mid = pct(AVG);
+  const sign = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+  $('tbody').innerHTML = rows.map((r, k) => {
+    const a = Math.min(pct(r.rt), mid), w = Math.abs(pct(r.rt) - mid), gd = r.s - r.c;
+    return `<tr><td class="l pos-n">${k + 1}</td><td class="l team">${r.team}</td>
+      <td class="l rt"><div class="rtcell"><div class="track"><i style="left:${a}%;width:${w}%"></i><span class="mid" style="left:${mid}%"></span></div><span class="rtnum">${r.rt.toFixed(0)}</span></div></td>
+      <td class="num">${r.played}</td><td class="num">${r.s}</td><td class="num">${r.c}</td>
+      <td class="num ${sign(gd)}">${gd > 0 ? '+' : ''}${gd}</td><td class="num ${sign(r.delta)}">${r.delta.toFixed(3)}</td></tr>`;
+  }).join('');
+
+  const names = rows.map(r => r.team).sort(), opts = names.map(t => `<option>${t}</option>`).join('');
+  const a = $('teamA').value, b = $('teamB').value;
+  $('teamA').innerHTML = opts; $('teamB').innerHTML = opts;
+  $('teamA').value = names.includes(a) ? a : rows[0].team;
+  $('teamB').value = names.includes(b) ? b : rows[1].team;
+  $('total').value = st.avgGoals.toFixed(2);
+  predict();
+}
+
+function predict() {
+  const rt = t => st.rows.find(r => r.team === t).rt;
+  const d = rt($('teamA').value) - rt($('teamB').value), tot = parseFloat($('total').value) || 0;
+  const ga = tot * (SCALE + d) / (2 * SCALE);
+  $('gA').textContent = ga.toFixed(2); $('gB').textContent = (tot - ga).toFixed(2);
+  $('dRt').textContent = `ΔRt ${d > 0 ? '+' : ''}${d.toFixed(0)}`;
+}
+
+function setLeague(id) {
+  st.league = id;
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === id));
+  const max = Math.max(...DATA.leagues[id].matches.map(m => m[0]));
+  $('round').max = max; $('round').value = max;
+  render();
+}
+
+$('tabs').innerHTML = Object.entries(DATA.leagues).map(([id, l]) => `<button data-id="${id}" aria-pressed="false">${l.short}</button>`).join('');
+$('tabs').onclick = e => { const id = e.target.closest('button')?.dataset.id; if (id) setLeague(id); };
+$('lastN').onchange = render; $('round').oninput = render;
+['teamA', 'teamB', 'total'].forEach(id => $(id).oninput = predict);
+setLeague(st.league);
+</script>

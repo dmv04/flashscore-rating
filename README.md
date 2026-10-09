@@ -43,3 +43,8 @@ python -m venv .venv
 - `app/storage.py` — кэш в SQLite
 - `app/main.py` — FastAPI
 - `app/static/index.html` — интерфейс
+
+## Страница для шаринга
+
+`python -m share.build out.html` — собирает автономную страницу (`share/template.html`)
+со встроенными матчами из кэша. Рейтинг в ней считается прямо в браузере, сервер не нужен.
