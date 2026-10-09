@@ -49,4 +49,4 @@ python -m venv .venv
 (`--fragment` — без `<head>`, для публикации в Claude).
 
 `.github/workflows/pages.yml` каждый день (и после пуша в main) скачивает свежие матчи,
-собирает эту страницу и публикует на GitHub Pages: https://dmv04.github.io/flashscore-rating/
+собирает эту страницу и публикует на GitHub Pages: https://dmv04.github.io/slu-rating/
