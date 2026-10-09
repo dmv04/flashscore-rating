@@ -107,7 +107,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow" id="eyebrow">Данные flashscore.com</div>
+    <div class="eyebrow" id="eyebrow">Футбольная статистика</div>
     <h1>Рейтинг команд по балансу голов</h1>
     <p class="lead">Рейтинг — решение системы линейных уравнений по забитым и пропущенным с учётом силы соперников. Средний рейтинг турнира — 2200.</p>
   </header>
@@ -125,7 +125,7 @@
         <option value="8">последние 8</option><option value="10">последние 10</option>
       </select>
     </label>
-    <button class="btn primary" id="refresh">Обновить с flashscore</button>
+    <button class="btn primary" id="refresh">Обновить данные</button>
     <div class="stat" id="stat"></div>
   </div>
 
@@ -177,7 +177,7 @@ const q = () => $('lastN').value ? `&last_n=${$('lastN').value}` : '';
 
 async function init() {
   st.meta = await api('/api/meta');
-  $('eyebrow').textContent = `Сезон ${st.meta.season.replace('-', '/')} · данные flashscore.com`;
+  $('eyebrow').textContent = `Сезон ${st.meta.season.replace('-', '/')}`;
   $('scope').innerHTML = `<option value="world">Мир (без России)</option>` +
     st.meta.leagues.map(l => `<option value="${l.id}">${l.country} — ${l.name}</option>`).join('');
   if (STATIC) $('refresh').hidden = true;
@@ -273,7 +273,7 @@ async function loadPred() {
 }
 
 async function refresh() {
-  $('refresh').disabled = true; $('stat').className = 'stat'; $('stat').textContent = 'Скачиваю все турниры с flashscore, около 30 секунд…';
+  $('refresh').disabled = true; $('stat').className = 'stat'; $('stat').textContent = 'Обновляю данные по всем турнирам, около 30 секунд…';
   try { st.meta = await api('/api/refresh', { method: 'POST' }); await load(); }
   catch (e) { $('stat').className = 'stat err'; $('stat').textContent = 'Ошибка обновления: ' + e.message; }
   finally { $('refresh').disabled = false; }
