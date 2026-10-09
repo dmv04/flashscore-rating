@@ -29,6 +29,7 @@ LEAGUES = [
     Tournament("turkey", "Суперлига", "turkey/super-lig", "Турция"),
     Tournament("scotland", "Премьершип", "scotland/premiership", "Шотландия"),
     Tournament("rpl", "РПЛ", "russia/premier-league", "Россия", world=False),
+    Tournament("fnl", "ФНЛ", "russia/fnl", "Россия", world=False),
 ]
 
 CUPS = [

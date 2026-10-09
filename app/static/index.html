@@ -248,13 +248,14 @@ async function loadPred() {
   st.data = d;
   const games = d.leagues.reduce((a, l) => a + l.games.length, 0);
   $('stat').textContent = `Матчей в ближайших турах: ${games}`;
-  $('countryFilter').innerHTML = [['', 'Все страны'], ...d.leagues.map(l => [l.league, l.country])]
+  const countries = [...new Set(d.leagues.map(l => l.country))];
+  $('countryFilter').innerHTML = [['', 'Все страны'], ...countries.map(c => [c, c])]
     .map(([v, t]) => `<button data-v="${v}" aria-pressed="${st.country === v}">${t}</button>`).join('');
   $('countryFilter').onclick = e => { const b = e.target.closest('button'); if (!b) return; st.country = b.dataset.v; loadPred(); };
   const dt = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', weekday: 'short' });
   const tm = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
   const pctf = p => Math.round(p * 100);
-  $('rounds').innerHTML = d.leagues.filter(l => !st.country || l.league === st.country).map(l => `
+  $('rounds').innerHTML = d.leagues.filter(l => !st.country || l.country === st.country).map(l => `
     <section class="round">
       <h2>${l.country} · ${l.name} <small>${l.round ? l.round + '-й тур' : 'тур не найден'}</small></h2>
       <div class="games">${l.games.length ? l.games.map(g => {
